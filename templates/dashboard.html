@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Robos en el Metro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .header {
+            background-color: #343a40;
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+        .card {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            border: none;
+        }
+        .card-header {
+            background-color: #343a40;
+            color: white;
+            font-weight: bold;
+        }
+        .img-fluid {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .stats-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #ee3320;
+        }
+        .btn-canva {
+            background-color: #00C4CC;
+            color: white;
+        }
+        .btn-canva:hover {
+            background-color: #00a2a8;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8">
+                    <h1>Dashboard de Robos en el Metro</h1>
+                    <p class="lead">Análisis de datos del {{analysis.first_year}} al {{analysis.last_year}}</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <a href="{{ canva_link }}" class="btn btn-canva" target="_blank">
+                        Ver en Canva
+                    </a>
+                    <a href="/" class="btn btn-outline-light">Volver al Inicio</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <!-- Estadísticas principales -->
+        <div class="row">
+            <div class="col-md-4">
+                <div class="stats-card text-center">
+                    <h5>Total de Robos</h5>
+                    <div class="stat-value">{{ analysis.total }}</div>
+                    <p>Reportados en el período</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stats-card text-center">
+                    <h5>Tendencia</h5>
+                    <div class="stat-value">{{ analysis.trend }}</div>
+                    <p>Correlación: {{ "%.2f"|format(analysis.correlation) }} ({{ analysis.strength }})</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stats-card text-center">
+                    <h5>Período Analizado</h5>
+                    <div class="stat-value">{{ analysis.first_year }} - {{ analysis.last_year }}</div>
+                    <p>5 años de datos</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Gráficas -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        Robos por Año
+                    </div>
+                    <div class="card-body">
+                        <img src="data:image/png;base64,{{ plots.year }}" class="img-fluid" alt="Robos por año">
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        Top 10 Estaciones con Más Robos
+                    </div>
+                    <div class="card-body">
+                        <img src="data:image/png;base64,{{ plots.stations }}" class="img-fluid" alt="Top estaciones">
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        Robos por Alcaldía
+                    </div>
+                    <div class="card-body">
+                        <img src="data:image/png;base64,{{ plots.alcaldia }}" class="img-fluid" alt="Robos por alcaldía">
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        Robos por Línea
+                    </div>
+                    <div class="card-body">
+                        <img src="data:image/png;base64,{{ plots.linea }}" class="img-fluid" alt="Robos por línea">
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Nueva gráfica de género -->
+        {% if gender_plot %}
+        <div class="row">
+            <div class="col-md-6 offset-md-3">
+                <div class="card">
+                    <div class="card-header">
+                        Distribución de Robos por Género
+                    </div>
+                    <div class="card-body">
+                        <img src="data:image/png;base64,{{ gender_plot }}" class="img-fluid" alt="Distribución por género">
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <footer class="bg-dark text-white text-center py-3 mt-5">
+        <div class="container">
+            <p class="mb-0">© 2024 Análisis de Datos del Metro CDMX | Datos del {{analysis.first_year}} al {{analysis.last_year}}</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
