@@ -88,35 +88,56 @@ def load_data():
         return pd.DataFrame()
 
 def generate_gender_plot():
-    """Genera la gráfica de distribución por género"""
+    """Genera la gráfica de distribución por género con manejo robusto de errores"""
     try:
-        # Leer la hoja de géneros directamente
-        df_gender = pd.read_excel(EXCEL_FILE, sheet_name='Hoja1')
-        df_gender.columns = [col.strip().lower() for col in df_gender.columns]
-        
-        if 'genero' not in df_gender.columns or 'frecuencia' not in df_gender.columns:
+        # 1. Leer datos
+        try:
+            df_gender = pd.read_excel(EXCEL_FILE, sheet_name='Hoja1')
+        except Exception as e:
+            print(f"No se pudo leer Hoja1: {str(e)}")
             return None
-            
-        fig, ax = plt.subplots(figsize=(8, 6))
-        colors = ['#3498db', '#e74c3c', '#95a5a6']  # Azul, Rojo, Gris
-        wedges, texts, autotexts = ax.pie(df_gender['frecuencia'], 
-                                         labels=df_gender['genero'],
-                                         autopct='%1.1f%%',
-                                         startangle=90,
-                                         colors=colors,
-                                         wedgeprops=dict(width=0.4, edgecolor='w'))
+
+        # 2. Normalizar columnas
+        df_gender.columns = [str(col).strip().lower() for col in df_gender.columns]
         
-        # Mejorar estética
-        plt.setp(autotexts, size=12, weight="bold", color='white')
-        plt.setp(texts, size=12)
-        ax.set_title('Distribución de Robos por Género', pad=20)
+        # 3. Verificar columnas requeridas
+        required_cols = ['genero', 'frecuencia']
+        if not all(col in df_gender.columns for col in required_cols):
+            print("Columnas faltantes. Se encontraron:", df_gender.columns)
+            return None
+
+        # 4. Limpiar datos
+        df_gender = df_gender[required_cols].dropna()
+        df_gender['frecuencia'] = pd.to_numeric(df_gender['frecuencia'], errors='coerce')
+        df_gender = df_gender.dropna(subset=['frecuencia'])
+        
+        if df_gender.empty:
+            print("Datos vacíos después de limpieza")
+            return None
+
+        # 5. Crear gráfico
+        fig, ax = plt.subplots(figsize=(10, 8))
+        colors = ['#4e79a7', '#e15759', '#76b7b2']
+        
+        wedges, texts, autotexts = ax.pie(
+            df_gender['frecuencia'],
+            labels=df_gender['genero'],
+            autopct='%1.1f%%',
+            colors=colors,
+            startangle=90,
+            textprops={'color': 'white', 'weight': 'bold', 'size': 12},
+            wedgeprops={'edgecolor': 'white', 'linewidth': 1}
+        )
+        
+        ax.set_title('Distribución de Robos por Género', pad=20, fontweight='bold')
+        plt.tight_layout()
         
         return fig_to_base64(fig)
         
     except Exception as e:
-        print(f"Error al generar gráfica de género: {str(e)}")
+        print(f"Error inesperado en generate_gender_plot: {str(e)}")
         return None
-
+    
 def generate_plots(df):
     """Genera todas las gráficas y análisis"""
     plots = {}
@@ -144,7 +165,7 @@ def generate_plots(df):
     
     # Gráfica 1: Robos por año
     fig, ax = plt.subplots(figsize=(10, 6))
-    bars = ax.bar(yearly['año'], yearly['robos'], color= '#fd9c08')
+    bars = ax.bar(yearly['año'], yearly['robos'], color='#fd9c08')
     
     # Añadir porcentajes
     total = yearly['robos'].sum()
@@ -154,7 +175,8 @@ def generate_plots(df):
                f'{height:,}\n({height/total:.1%})',
                ha='center', va='bottom')
     
-    ax.set_title('Robos por Año', pad=20)
+    ax.set_title('Robos por Año', fontsize=14, fontweight='bold', pad=20)
+    ax.grid(axis='y', linestyle='--', alpha=0.7)
     plots['year'] = fig_to_base64(fig)
     plt.close(fig)
     
@@ -166,9 +188,10 @@ def generate_plots(df):
     for i, (est, val) in enumerate(zip(top_stations['estacion'], top_stations['robos'])):
         ax.text(val + max(top_stations['robos'])*0.01, i, 
                f'{val:,} ({val/top_stations["robos"].sum():.1%})',
-               va='center')
+               va='center', fontsize=10)
     
-    ax.set_title('Top 10 Estaciones Con Mas Robos', pad=20)
+    ax.set_title('Top 10 Estaciones con Más Robos', fontsize=14, fontweight='bold', pad=20)
+    ax.grid(axis='x', linestyle='--', alpha=0.7)
     plots['stations'] = fig_to_base64(fig)
     plt.close(fig)
     
@@ -180,9 +203,10 @@ def generate_plots(df):
     for i, (alc, val) in enumerate(zip(by_alcaldia['alcaldia'], by_alcaldia['robos'])):
         ax.text(val + max(by_alcaldia['robos'])*0.01, i,
                f'{val:,} ({val/by_alcaldia["robos"].sum():.1%})',
-               va='center')
+               va='center', fontsize=10)
     
-    ax.set_title('Robos por Alcaldía', pad=20)
+    ax.set_title('Robos por Alcaldía', fontsize=14, fontweight='bold', pad=20)
+    ax.grid(axis='x', linestyle='--', alpha=0.7)
     plots['alcaldia'] = fig_to_base64(fig)
     plt.close(fig)
     
@@ -198,10 +222,11 @@ def generate_plots(df):
             height = bar.get_height()
             ax.text(bar.get_x() + bar.get_width()/2, height,
                    f'{height:,}\n({height/by_line["robos"].sum():.1%})',
-                   ha='center', va='bottom')
+                   ha='center', va='bottom', fontsize=10)
         
-        ax.set_title('Robos por Línea', pad=20)
+        ax.set_title('Robos por Línea', fontsize=14, fontweight='bold', pad=20)
         plt.xticks(rotation=45)
+        ax.grid(axis='y', linestyle='--', alpha=0.7)
         plots['linea'] = fig_to_base64(fig)
         plt.close(fig)
     
